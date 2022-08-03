@@ -52,8 +52,8 @@ class StockName(models.Model):
         return self.name
 """
 class TradeInfo(models.Model):
-    name = models.CharField(max_length=255)
-    Date = models.DateField(auto_now_add=True)
+    Name = models.CharField(max_length=255)
+    Date = models.DateField(auto_now_add=False)
     Open = models.DecimalField(max_digits=10, decimal_places=6)
     High = models.DecimalField(max_digits=10, decimal_places=6)
     Low = models.DecimalField(max_digits=10, decimal_places=6)
@@ -65,4 +65,4 @@ class TradeInfo(models.Model):
         ordering = ['Date']
 
     def __str__(self):
-        return self.name
+        return self.Name

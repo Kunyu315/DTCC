@@ -7,53 +7,24 @@ Created on Thu Jul 28 23:19:18 2022
 """
 
 import graphene
-from graphene_django import DjangoObjectType
+from graphene_django import DjangoObjectType, DjangoConnectionField
 from .models import Category, TradeInfo
 import decimal
+from django_filters import FilterSet, OrderingFilter
+from graphene import ObjectType, Schema, relay
+from graphene_django.filter import DjangoFilterConnectionField
 
 class CategoryType(DjangoObjectType):
     class Meta: 
         model = Category
         fields = ('id','title')
-"""
-  
-class BookType(DjangoObjectType):
-    class Meta: 
-        model = Book
-        fields = (
-            'id',
-            'title',
-            'author',
-            'isbn',
-            'pages', 
-            'price',
-            'quantity', 
-            'description',
-            'imageurl',
-            'status',
-            'date_created',
-        )  
-
-class GroceryType(DjangoObjectType):
-    class Meta:
-        model = Grocery
-        fields = (
-            'product_tag',
-            'name',
-            'category',
-            'price',
-            'quantity',
-            'imageurl',
-            'status',
-            'date_created',
-        )
-"""
+    
 
 class InfoType(DjangoObjectType):
     class Meta:
         model = TradeInfo
         fields = (
-            'name',
+            'Name',
             'Date',
             'Open',
             'High',
@@ -61,11 +32,22 @@ class InfoType(DjangoObjectType):
             'Close',
             'Volume',
         )
+        interfaces = (graphene.relay.Node,)
+        filter_fields = {'Name': ['exact', 'icontains', 'istartswith', 'in'],
+                         'Date': ['exact', 'range', 'in'],
+                         'Open': ['exact', 'range', 'in'], 
+                         'High': ['exact', 'range', 'in'], 
+                         'Low': ['exact', 'range', 'in'], 
+                         'Close':['exact', 'range', 'in'], 
+                         'Volume': ['exact', 'range', 'in'],
+                         }
 
 class Query(graphene.ObjectType):
     categories = graphene.List(CategoryType)
      
-    trades = graphene.List(InfoType)
+    #trades = graphene.List(InfoType)
+    trades = relay.Node.Field(InfoType)
+    all_trades = DjangoFilterConnectionField(InfoType)
 
     def resolve_trades(root, info, **kwargs):
         # Querying a list
@@ -74,12 +56,9 @@ class Query(graphene.ObjectType):
     def resolve_categories(root, info, **kwargs):
         # Querying a list
         return Category.objects.all()
-"""
-    def resolve_groceries(root, info, **kwargs):
-        # Querying a list
-        return Grocery.objects.all()
-"""
+
 schema = graphene.Schema(query=Query)
+
 
 class UpdateCategory(graphene.Mutation):
     class Arguments:
@@ -117,7 +96,7 @@ class CreateCategory(graphene.Mutation):
         return CreateCategory(category=category)
 
 class TradeInfoInput(graphene.InputObjectType):
-    name = graphene.String()
+    Name = graphene.String()
     Date = graphene.Date()
     Open = graphene.Decimal()
     High = graphene.Decimal()
@@ -134,7 +113,7 @@ class CreateTradeInfo(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, input):
         tradeinfo = TradeInfo()
-        tradeinfo.name = input.name
+        tradeinfo.Name = input.Name
         tradeinfo.Date = input.Date
         tradeinfo.Open = input.Open
         tradeinfo.High = input.High
@@ -155,7 +134,7 @@ class UpdateTradeInfo(graphene.Mutation):
     @classmethod
     def mutate(cls, root, info, input, id):
         tradeinfo = TradeInfo.objects.get(pk=id)
-        tradeinfo.name = input.name
+        tradeinfo.Name = input.Name
         tradeinfo.Date = input.Date
         tradeinfo.Open = input.Open
         tradeinfo.High = input.High
